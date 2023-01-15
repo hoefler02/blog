@@ -2,7 +2,7 @@
 // Recursive Backtracking Algorithm
 
 var cols, rows;
-var w = 30;
+var w = 25;
 var grid = [];
 var stack = [];
 var current;
@@ -117,7 +117,7 @@ function Cell(x,y) {
       	}
     	if (stack.length == 0) {
     		if (this.visited) {
-				fill(grey);
+				fill(curr);
 			}
     		//if (this == start) {
 			//	fill('#77dd77');

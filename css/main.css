@@ -16,8 +16,9 @@ body {
     color: var(--col-dark);
     background-color: var(--col-light);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    padding-top: 10pc;
 }
 
 canvas {
@@ -31,13 +32,13 @@ canvas {
 
 .main {
     font-family: 'Fira Code', monospace;
-    background-color: var(--col-light);
+    background-color: var(--col-dark);
     border: 6px solid var(--col-dark);
+    color: var(--col-light);
     border-radius: 50px;
-    margin: 2pc;
+    margin: auto;
     padding: 2pc;
-    flex-direction: column;
-    justify-content: center;
+    width: 30%;
 }
 
 #header {
@@ -48,5 +49,22 @@ canvas {
 #profile {
     border-radius: 50%;
     margin: 2pc;
-    width: 30%;
+    width: 20%;
+}
+
+#sections {
+    padding-top: 10px;
+    line-height: 30px;
+}
+
+a {
+    color: var(--col-red);
+}
+
+a:visited {
+    color: var(--col-red);
+}
+
+a:hover {
+    color: var(--col-purple);
 }
