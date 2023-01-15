@@ -2,17 +2,22 @@
 // Recursive Backtracking Algorithm
 
 var cols, rows;
-var w = 40;
+var w = 30;
 var grid = [];
 var stack = [];
 var current;
 var start;
 var finish;
+var grey = '#eeeeee';
+var light = '#fefefe'
+var curr = '#dddddd';
+
 
 
 function setup() {
 	var c = createCanvas(document.body.clientWidth,document.documentElement.scrollHeight);
     c.parent("p5");
+	background(light);
 	frameRate(300);
 	cols = floor(width/w);
 	rows = floor(height/w);
@@ -73,10 +78,6 @@ function AroundClear(x,y) {
 			return true;
 	}
 }
-
-var grey = '#eeeeee';
-var light = '#fefefe'
-var curr = '#ff6188';
 
 function Cell(x,y) {
 	this.x = x;
