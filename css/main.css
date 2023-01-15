@@ -38,7 +38,7 @@ canvas {
     border-radius: 50px;
     margin: auto;
     padding: 2pc;
-    width: 30%;
+    width: 40%;
 }
 
 #header {
@@ -57,14 +57,26 @@ canvas {
     line-height: 30px;
 }
 
-a {
+.lnk {
     color: var(--col-red);
 }
 
-a:visited {
+.lnk:visited {
     color: var(--col-red);
 }
 
-a:hover {
+.lnk:hover {
+    color: var(--col-purple);
+}
+
+.article {
+    color: var(--col-blue);
+}
+
+.article:visited {
+    color: var(--col-blue);
+}
+
+.article:hover {
     color: var(--col-purple);
 }

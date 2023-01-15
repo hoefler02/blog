@@ -3,25 +3,29 @@
     <head>
         <title>Adventures in Hacking</title>
         <link rel="stylesheet" href="css/main.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/p5@1.5.0/lib/p5.js"></script>
         <script src="script/sketch.js"></script>
     </head>
     <body>
         <div id="p5"></div>
         <div class="main">
             <div id="header">
-                <img id="profile" src="img/profile-invert.png" alt="">
+                <img id="profile" src="img/profile-moshed.gif" alt="">
                 <div id="resume">
                     <h2>Michael Hoefler</h2>
                     <ul>
                         <li>Math Student @ UNCA</li>
                         <li>Programming, Hacking</li>
-                        <li>See <a href="content/Resume.pdf">Resume</a> and <a href="https://github.com/hoefler02">Github</a></li>
+                        <li>See <a class="lnk" href="content/Resume.pdf">Resume</a> and <a class="lnk" href="https://github.com/hoefler02">Github</a></li>
                     </ul>
                 </div>
             </div>
             <ul id="sections">
-                <li>Binary Exploitation</li>
+                <li>Binary Exploitation
+                    <ul>
+                        <li><a class="article" href="articles/hole.html">HITCON CTF 2021: Hole (V8 Exploitation)</a></li>
+                    </ul>
+                </li>
                 <li>Reverse Engineering</li>
                 <li>Cryptography</li>
             </ul>
