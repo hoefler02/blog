@@ -17,7 +17,7 @@ body {
     background-color: var(--col-darker);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
     padding-top: 10pc;
     flex-direction: column;
     font-family: 'Fira Code';
@@ -29,9 +29,10 @@ body {
 
 pre code.hljs {
   font-family: 'Fira Code';
-  display: block;
+  display: flex;
   border-radius: 25px;
   border: 4px solid var(--col-red);
+  width: clamp(80ch, 50%, 100ch);
 }
 
 code {
@@ -42,8 +43,7 @@ code {
 }
 
 p {
-    inline-size: 30%;
-    overflow-wrap: break-word;
+    width: clamp(45ch, 50%, 75ch);
 }
 
 .lnk {

