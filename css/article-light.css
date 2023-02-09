@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@600&display=swap');
+
+:root {
+    --col-red: #ff6188;
+    --col-orange: #fc9867;
+    --col-yellow: #ffd866;
+    --col-green: #a9dc76;
+    --col-blue: #78dce8;
+    --col-purple: #ab9df2;
+    --col-dark: #27252a;
+    --col-darker: #111012;
+    --col-light: #fefefe;
+}
+
+body {
+    color: var(--col-darker);
+    background-color: var(--col-light);
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    padding-top: 10pc;
+    flex-direction: column;
+    font-family: 'Fira Code';
+}
+
+.hljs {
+    background: var(--col-light) !important;
+}
+
+pre code.hljs {
+  font-family: 'Fira Code';
+  display: flex;
+  margin: 0;
+  float: center;
+  width: 50pc;
+  border-radius: 25px;
+  border: 4px solid var(--col-red);
+}
+
+code {
+  display: inline;
+  font-family: 'Fira Code';
+  background-color: var(--col-light);
+  color: var(--col-dark);
+}
+
+p {
+    width: 50pc;
+}
+
+h2 {
+    width: 50pc;
+    text-align: center;
+}
+
+img {
+    width: 50pc;
+    border-radius: 25px;
+    border: 4px solid var(--col-blue);
+}
+
+.lnk {
+    color: var(--col-red);
+}
+
+.lnk:visited {
+    color: var(--col-red);
+}
+
+.lnk:hover {
+    color: var(--col-purple);
+}

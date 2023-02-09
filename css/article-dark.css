@@ -48,6 +48,16 @@ p {
     width: 50pc;
 }
 
+h2 {
+    width: 50pc;
+    text-align: center;
+}
+img {
+    width: 50pc;
+    border-radius: 25px;
+    border: 4px solid var(--col-blue);
+}
+
 .lnk {
     color: var(--col-red);
 }
