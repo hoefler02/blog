@@ -30,9 +30,11 @@ body {
 pre code.hljs {
   font-family: 'Fira Code';
   display: flex;
+  margin: 0;
+  float: center;
+  width: 50pc;
   border-radius: 25px;
   border: 4px solid var(--col-red);
-  width: clamp(80ch, 50%, 100ch);
 }
 
 code {
@@ -43,7 +45,7 @@ code {
 }
 
 p {
-    width: clamp(45ch, 50%, 75ch);
+    width: 50pc;
 }
 
 .lnk {
