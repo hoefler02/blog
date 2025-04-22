@@ -1,3 +1,3 @@
-# CyberSecurity Blog
+# Blog
 
-This is the code for my new site. Enjoy!
+This is my blog. It has writeups. Enjoy.

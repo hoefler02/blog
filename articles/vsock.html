@@ -559,7 +559,7 @@ write(pipes[i][1], &push_rbx_pop_rsp_ret, 8); // stack pivot [sk_error_report()]
 close(s); // trigger the exploit!
     </code></pre>
     <p>Notice that I did not call <code>prepare_kernel_cred(NULL)</code> since this is no longer supported (causes a crash). Instead I opted to call <code>commit_creds</code> with <code>init_cred</code> - a structure with a constant offset from the kernel base possessing uid=gid=0. I also borrowed the swapgs_restore_regs_and_return_to_usermode technique from <a href="https://lkmidas.github.io/posts/20210128-linux-kernel-pwn-part-2/">this</a> blog. With all of those puzzle pieces in place, our exploit gives a root shell!</p>
-    <img src="img/pwned.png" alt="">
+    <img src="img/pwned.gif" alt="">
     <p>The final source code for the exploit is posted <a href="https://github.com/hoefler02/CVE-2025-21756/blob/main/x.c">here</a>. The exploit could still be much more reliable and elegant, but for my first kernel pwn I am happy with it!</p>
     <h2>Thank You!</h2>
     <p>For a bug involving just a few lines of patch code, this journey taught me way more about the kernel than I ever could have expected! I could never have completed this exploit without all of the super helpful hackers on the #kernelctf discord channel! Thank you all + happy pwning!</p>
