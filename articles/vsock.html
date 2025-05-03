@@ -5,6 +5,7 @@
         <link rel="stylesheet" href="../css/article-dark.css">
         <link rel="stylesheet" href="../css/highlight/styles/github-dark.min.css">
         <script src="../css/highlight/highlight.min.js"></script>
+        <meta charset="UTF-8">
     </head>
     <body>
        <script>hljs.highlightAll();</script>
@@ -15,7 +16,7 @@
        <p>While browsing the <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MbebdRdFnj6qZ0Yd7LwQfvYC2oF/pubhtml">public spreadsheet</a> of submissions, I saw an interesting entry: exp237. The bug patch seemed incredibly simple, and I was amazed that a researcher was able to leverage the issue for privilege escalation. So I set off on a journey that would lower my GPA and occasionally leave me questioning my sanity: <i>My first linux kernel exploit</i>!</p>
 
     <h2>Setting up the Environment</h2>
-    <p>Before we can start diving into the exploit development, we need to set up a good linux kernel debugging environment. I decided to use <a href="https://www.qemu.org/">QEMU</a> with scripts from <a href="https://lkmidas.github.io/posts/20210123-linux-kernel-pwn-part-1/">midas's</a> awesome writeup with the <a href="https://github.com/destr4ct/gef-kernel">gef-kernel</a> GDB extensions. I chose to start with linux kernel 6.6.75 since it was close to the versions being exploited by the other researchers. I actually completed this entire project within WSL so that I could write the exploit on my Windows school computer!</p> 
+    <p>Before we can start diving into the exploit development, we need to set up a good linux kernel debugging environment. I decided to use <a href="https://www.qemu.org/">QEMU</a> with scripts from <a href="https://lkmidas.github.io/posts/20210123-linux-kernel-pwn-part-1/">midas's</a> awesome writeup with batas <a href="https://github.com/bata24">gdb kernel extensions</a>. I chose to start with linux kernel 6.6.75 since it was close to the versions being exploited by the other researchers. I actually completed this entire project within WSL so that I could write the exploit on my Windows school computer!</p> 
     <img src="img/kern-pwn-dev.png" alt="kernel exploit development environment screenshot">
 
     <h2>Patch Analysis</h2>
@@ -547,8 +548,8 @@ write(pipes[i][1], &user_rflags, 8);
 write(pipes[i][1], user_rsp, 8); // rsp
 write(pipes[i][1], &user_ss, 8);
 write(pipes[i][1], buf, 0x18);
-write(pipes[i][1], &\not, 8); // sk_lock
-write(pipes[i][1], &\not, 8); // sk_lock
+write(pipes[i][1], &amp;not, 8); // sk_lock
+write(pipes[i][1], &amp;not, 8); // sk_lock
 write(pipes[i][1], &null_ptr, 8); // sk_lock
 write(pipes[i][1], &null_ptr, 8); // sk_lock
 write(pipes[i][1], buf, 0x200);
